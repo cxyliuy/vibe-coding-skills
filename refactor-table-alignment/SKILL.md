@@ -1,133 +1,246 @@
 ---
-skill: refactor-table-alignment
-version: "1.0.0"
-type: "refactor_ui"
-description: >
-  Refactor table components to match enterprise UX alignment standards.
-  Detects semantic column types and enforces alignment + formatting + width constraints.
-tags: [enterprise, ui, table, alignment, formatting]
-author: ChatGPT
+name: refactor-table-alignment
+description: Refactor UI table components to follow enterprise column alignment, formatting, and width standards while preserving sorting, filtering, and pagination.
 ---
 
-## Trigger Conditions
+# refactor-table-alignment
 
-Trigger when:
+## Role
 
-- Editing or refactoring table components in UI code.
-- Table-like data structures detected.
-- Column definitions present.
+You are a **UI Table Alignment Refactor Skill**.
 
-Matches patterns such as:
+Your job is to refactor an existing table component so it complies with the **enterprise UX alignment + formatting + width** rules below, **without changing functionality** (sorting, filtering, pagination, column behavior).
 
-- `table`, `DataGrid`, `ColumnConfig`
-- Ant Design / Element Plus / MUI Table components.
+You must be precise, conservative, and regression-safe.
+
+---
 
 ## Inputs
 
-| Name       | Type   | Required | Description                     |
-| ---------- | ------ | -------- | ------------------------------- |
-| sourceCode | string | yes      | The UI source file content      |
-| columnDefs | array  | optional | Explicit column definitions     |
-| language   | string | no       | Code language (js/ts/vue/react) |
+You will be given one or more of the following:
 
-## Outputs
+- Table component source code (React/Vue/Angular/HTML)
+- Column definitions/config (e.g., `columns`, `Column[]`, `header`, `render`, `formatter`)
+- Sample dataset (optional)
+- Existing utilities (date/number formatters) (optional)
 
-| Name            | Type   | Description             |
-| --------------- | ------ | ----------------------- |
-| transformedCode | string | Refactored code         |
-| diff            | string | Unified diff of changes |
-| report          | object | Alignment audit report  |
-
-## Steps (Implementation)
-
-1. **Parse code**
-    - Use AST parser (Babel/TS) to find table definitions.
-
-2. **Detect column semantics**
-    - Semantic rules:
-        - `index`: id / serial
-        - `date` / `datetime`: date formats
-        - `status`: tag/badge
-        - `action`: button/icon columns
-        - `numeric`: numbers/metrics
-        - `text`: semantic text
-
-3. **Resolve alignment**
-    - Map semantics → alignment:
-        - `index`: center
-        - `date/datetime`: center
-        - `status`: center
-        - `action`: center
-        - `numeric`: right
-        - `text`: left
-
-4. **Apply formatting**
-    - Numeric: add formatting functions
-    - Date: enforce consistent `YYYY-MM-DD` or `YYYY-MM-DD HH:mm`
-
-5. **Enforce width**
-    - Inject fixed widths where required
-
-6. **Output transformed code + diff + report**
+If the table implementation is not discoverable (e.g., columns are generated dynamically and you cannot locate the generation logic), **STOP** and ask for the minimal pointer(s) needed (file path, column config location).
 
 ---
 
-## Rules (Hard Constraints)
+## Output Order (MANDATORY)
 
-### Alignment Rules
+1. **Alignment & Formatting Audit**
+    - List each column, inferred semantic type, current alignment/format, and violations.
+2. **Minimal Runnable Refactor (MVP)**
+    - Implement the smallest set of changes that satisfy all rules.
+3. **Tests**
+    - Cover normal cases and edge cases (formatting + alignment mapping + preservation of existing behavior).
+4. **Failure Scenarios**
+    - What happens when input data is invalid / missing.
+5. **Known Limitations**
+    - What is not handled (explicitly).
+6. **Optional Next Steps**
+    - Suggestions only (do NOT implement).
 
-| Semantic | Alignment |
-| -------- | --------- |
-| index    | center    |
-| date     | center    |
-| datetime | center    |
-| status   | center    |
-| action   | center    |
-| numeric  | right     |
-| text     | left      |
+---
 
-### Format Constraints
+## Rules (STRICT)
 
-- Numeric values must use thousand separators
-- Numeric columns must have consistent decimal places
-- Date formats must be one style per column
+- ❌ Do NOT introduce new features
+- ❌ Do NOT relax or reinterpret constraints
+- ❌ Do NOT redesign architecture or component API
+- ❌ Do NOT apply global alignment to all columns
+- ✅ Prefer small, explicit changes over abstractions
+- ✅ Preserve sorting, filtering, pagination, and existing render logic
 
-### Width Constraints
+---
 
-- Index: 48–64px fixed
-- Date only: ~120px
-- Date + time: 160–180px
-- Action: 120–160px fixed
+## Alignment Standards (MUST FOLLOW)
 
-### Prohibitions
+### 1) Center align (`center`)
 
-- Do not override sorting/filtering/pagination
-- Do not left-align numeric data
-- Do not mix alignments within the same semantic type
-- Do not center all columns globally
+Apply ONLY to:
+
+- **Index / Serial Number** column
+- **Date / Time** column(s)
+    - Format must be consistent per column:
+        - `YYYY-MM-DD` **OR**
+        - `YYYY-MM-DD HH:mm`
+- **Status** column (tag/badge UI)
+- **Action** column (buttons / icons)
+
+### 2) Left align (`left`)
+
+Apply to all **text-based readable content**:
+
+Examples:
+
+- Name
+- Title
+- Description
+- Category
+- Address
+- Any non-numeric human-readable content
+
+### 3) Right align (`right`)
+
+Apply to all **numeric values**:
+
+Examples:
+
+- Amount
+- Price
+- Quantity
+- KPI values
+- Percentages
+- Statistics
+
+Numeric formatting requirements:
+
+- **Thousand separators** must be applied
+- **Decimal places** must be consistent _within the same column_
+
+---
+
+## Width Constraints (MUST FOLLOW)
+
+- **Index column width:** fixed `48–64px`
+- **Date column width:**
+    - Date only: `~120px`
+    - Date + Time: `160–180px`
+- **Action column width:** fixed `120–160px`
+
+---
+
+## Hard Guardrails
+
+You MUST ensure:
+
+- No mixed alignment within the same semantic data type
+- No numeric column is left-aligned
+- No “center all columns” shortcut is applied
+- Layout remains scannable and comparison-friendly
+- Existing functionality is preserved
+
+---
+
+## Semantic Detection Heuristics
+
+Infer the semantic type per column using **multiple signals** (do not rely on one):
+
+1. **Field/key name hints**
+    - Index: `index`, `no`, `seq`, `serial`
+    - Date/Time: `date`, `time`, `createdAt`, `updatedAt`, `timestamp`
+    - Status: `status`, `state`
+    - Action: `action`, `operations`, `op`, `actions`
+    - Numeric: `amount`, `price`, `qty`, `count`, `kpi`, `rate`, `percent`, `total`, `sum`
+2. **Renderer output**
+    - Tag/badge => status
+    - Buttons/icons => action
+3. **Value shape**
+    - Numbers/percent strings => numeric
+    - ISO date strings / timestamps => date/datetime
+
+If semantics are ambiguous, choose the safest default:
+
+- Prefer **text-left** unless strong evidence indicates numeric/date/status/action.
+
+---
+
+## Implementation Guidance (Portable)
+
+Implement alignment using the framework’s standard mechanism (examples):
+
+- Ant Design Table: `align: 'left'|'center'|'right'`, `width`
+- Element Plus Table: `align`, `header-align`, column `width`
+- MUI DataGrid: `align`, `headerAlign`, `width`
+- Native table: CSS `text-align` per column + fixed widths
+
+Formatting:
+
+- Use existing format utilities if present.
+- If none exist, add minimal local formatter(s) with no external dependencies.
+
+---
+
+## Validation Checklist
+
+Before finishing, confirm all are true:
+
+- [ ] Index, Date/Time, Status, Action columns are **center** aligned
+- [ ] Text columns are **left** aligned
+- [ ] Numeric columns are **right** aligned
+- [ ] Numeric values show thousand separators
+- [ ] Decimal places are consistent per numeric column
+- [ ] Date formats are consistent per date/datetime column
+- [ ] Width constraints applied to Index/Date/Action columns
+- [ ] Sorting/filtering/pagination behaviors unchanged
+- [ ] No global alignment override exists
 
 ---
 
 ## Examples
 
-### Before
-
-````js
-{
-  title: "Amount",
-  dataIndex: "amount",
-  key: "amount"
-}
-
-
-### After
+### Numeric column (right + formatting)
 
 ```js
 {
-  title: "Amount",
-  dataIndex: "amount",
-  key: "amount",
-  align: "right",
-  render: v => formatNumber(v, { thousands: true, decimals: 2 })
+  title: 'Amount',
+  dataIndex: 'amount',
+  key: 'amount',
+  align: 'right',
+  render: (v) => formatNumber(v, { thousands: true, decimals: 2 })
 }
-````
+```
+
+### Date column (center + fixed format + width)
+
+```js
+{
+  title: 'Created At',
+  dataIndex: 'createdAt',
+  key: 'createdAt',
+  align: 'center',
+  width: 180,
+  render: (v) => formatDate(v, 'YYYY-MM-DD HH:mm')
+}
+```
+
+### Index column (center + narrow width)
+
+```js
+{
+  title: '#',
+  key: '__index',
+  align: 'center',
+  width: 56,
+  render: (_v, _row, i) => i + 1
+}
+```
+
+---
+
+## Failure Scenarios (Expected Behavior)
+
+- Missing/invalid numeric values: render `-` (or existing placeholder) and do not crash
+- Missing/invalid dates: render `-` (or existing placeholder) and do not crash
+- Mixed-type data (string number): coerce safely for formatting _without changing sorting semantics_
+
+If coercion could alter sorting, keep sorting logic unchanged and only format display.
+
+---
+
+## Known Limitations
+
+- Does not redesign column content or add new visual encodings
+- Does not infer business-specific precision rules beyond “consistent within a column”
+- Does not change server-side sorting/filtering implementations
+
+---
+
+## Optional Next Steps (Do NOT implement)
+
+- Add a lint rule to flag alignment/format violations in CI
+- Add column metadata (`semanticType`) to avoid heuristic drift
+- Add visual regression tests (Playwright) for alignment + width snapshots
