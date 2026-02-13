@@ -3,6 +3,16 @@
 > Enforce enterprise UX table alignment and numeric formatting standards
 > without breaking existing functionality.
 
+## 📦 Metadata
+
+---
+name: enterprise-table-alignment-refactor
+type: ui-refactor
+scope: component-level
+risk: low
+preserves_behavior: true
+---
+
 ## 🎯 Purpose
 
 Improve visual scanability, numeric comparability, and information
@@ -63,13 +73,3 @@ With thousand separators and consistent decimals.
 1.  Detect column semantics\
 2.  Apply alignment + formatting\
 3.  Enforce width rules
-
-## 📦 Metadata
-
-``` yaml
-name: enterprise-table-alignment-refactor
-type: ui-refactor
-scope: component-level
-risk: low
-preserves_behavior: true
-```
