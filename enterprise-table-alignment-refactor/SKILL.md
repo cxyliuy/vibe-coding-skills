@@ -1,75 +1,120 @@
-# 🧩 Skill: Enterprise Table Alignment Refactor
-
-> Enforce enterprise UX table alignment and numeric formatting standards
-> without breaking existing functionality.
-
-## 📦 Metadata
-
 ---
-name: enterprise-table-alignment-refactor
-type: ui-refactor
-scope: component-level
-risk: low
-preserves_behavior: true
+skill: refactor_table_alignment
+version: "1.0.0"
+type: "refactor_ui"
+description: >
+  Refactor table components to match enterprise UX alignment standards.
+  Detects semantic column types and enforces alignment + formatting + width constraints.
+tags: [enterprise, ui, table, alignment, formatting]
+author: ChatGPT
 ---
 
-## 🎯 Purpose
+## Trigger Conditions
 
-Improve visual scanability, numeric comparability, and information
-hierarchy by applying strict semantic alignment rules.
+Trigger when:
 
-## 🧠 Activation Conditions
+- Editing or refactoring table components in UI code.
+- Table-like data structures detected.
+- Column definitions present.
 
-Trigger when working with table or grid components (HTML tables, Ant
-Design, Element Plus, MUI DataGrid, or custom systems).
+Matches patterns such as:
 
-## 📐 Alignment Standards
+- `table`, `DataGrid`, `ColumnConfig`
+- Ant Design / Element Plus / MUI Table components.
 
-### Center Align
+## Inputs
 
--   Index / Serial Number
--   Date / Date-Time
--   Status (tag UI)
--   Action buttons
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| sourceCode | string | yes | The UI source file content |
+| columnDefs | array | optional | Explicit column definitions |
+| language | string | no | Code language (js/ts/vue/react) |
 
-### Left Align
+## Outputs
 
--   Name
--   Title
--   Description
--   Category
--   Address
--   All readable text fields
+| Name | Type | Description |
+|------|------|-------------|
+| transformedCode | string | Refactored code |
+| diff | string | Unified diff of changes |
+| report | object | Alignment audit report |
 
-### Right Align
+## Steps (Implementation)
 
--   Amount
--   Price
--   Quantity
--   KPI
--   Percentages
--   Statistics
+1. **Parse code**
+   - Use AST parser (Babel/TS) to find table definitions.
 
-With thousand separators and consistent decimals.
+2. **Detect column semantics**
+   - Semantic rules:
+     - `index`: id / serial
+     - `date` / `datetime`: date formats
+     - `status`: tag/badge
+     - `action`: button/icon columns
+     - `numeric`: numbers/metrics
+     - `text`: semantic text
 
-## 📏 Width Constraints
+3. **Resolve alignment**
+   - Map semantics → alignment:
+     - `index`: center
+     - `date/datetime`: center
+     - `status`: center
+     - `action`: center
+     - `numeric`: right
+     - `text`: left
 
-  Column      Width
------------ ------------
-  Index       48--64px
-  Date        \~120px
-  Date+Time   160--180px
-  Action      120--160px
+4. **Apply formatting**
+   - Numeric: add formatting functions
+   - Date: enforce consistent `YYYY-MM-DD` or `YYYY-MM-DD HH:mm`
 
-## 🚫 Prohibited
+5. **Enforce width**
+   - Inject fixed widths where required
 
--   Global centering
--   Numeric left alignment
--   Mixed semantic alignment
--   Breaking sorting/filtering/pagination
+6. **Output transformed code + diff + report**
 
-## 🛠️ Refactor Flow
+---
 
-1.  Detect column semantics\
-2.  Apply alignment + formatting\
-3.  Enforce width rules
+## Rules (Hard Constraints)
+
+### Alignment Rules
+
+| Semantic | Alignment |
+|----------|-----------|
+| index | center |
+| date | center |
+| datetime | center |
+| status | center |
+| action | center |
+| numeric | right |
+| text | left |
+
+### Format Constraints
+
+- Numeric values must use thousand separators
+- Numeric columns must have consistent decimal places
+- Date formats must be one style per column
+
+### Width Constraints
+
+- Index: 48–64px fixed
+- Date only: ~120px
+- Date + time: 160–180px
+- Action: 120–160px fixed
+
+### Prohibitions
+
+- Do not override sorting/filtering/pagination
+- Do not left-align numeric data
+- Do not mix alignments within the same semantic type
+- Do not center all columns globally
+
+---
+
+## Examples
+
+### Before
+
+```js
+{
+  title: "Amount",
+  dataIndex: "amount",
+  key: "amount"
+}
